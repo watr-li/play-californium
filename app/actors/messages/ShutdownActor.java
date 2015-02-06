@@ -1,3 +1,3 @@
-package californium.messages;
+package actors.messages;
 
 public class ShutdownActor {}

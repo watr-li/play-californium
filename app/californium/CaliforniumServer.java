@@ -1,5 +1,6 @@
 /*******************************************************************************
  * Copyright (c) 2014 Institute for Pervasive Computing, ETH Zurich and others.
+ * Modifications (c) 2015 Watr.li
  *
  * All rights reserved. This program and the accompanying materials
  * are made available under the terms of the Eclipse Public License v1.0
@@ -13,6 +14,7 @@
  * Contributors:
  *    Matthias Kovatsch - creator and main architect
  ******************************************************************************/
+
 package californium;
 
 import java.net.SocketException;
@@ -22,20 +24,22 @@ import org.eclipse.californium.core.CoapServer;
 import org.eclipse.californium.core.server.resources.CoapExchange;
 import org.eclipse.californium.core.coap.CoAP.ResponseCode;
 
-
 import play.Logger;
 
-
+import actors.messages.*;
 
 import akka.actor.*;
 import static akka.pattern.Patterns.ask;
 
-
+/**
+ * Eclipse Californium server that handles all received CoAP messages and forwards them
+ * to the Play application.
+ */
 public class CaliforniumServer extends CoapServer {
 
     final static Logger.ALogger logger = Logger.of("CaliforniumServer");
 
-    // This is the actor that will be notified if a request is received.
+    // Reference to the actor that will be notified if a CoAP message is received.
     ActorRef serverActor;
 
     public static CaliforniumServer initialize(ActorRef serverActor) {
@@ -54,8 +58,7 @@ public class CaliforniumServer extends CoapServer {
     }
 
     /*
-     * Constructor for a new Hello-World server. Here, the resources
-     * of the server are initialized.
+     * The CoAP resources of the server are initialized.
      */
     public CaliforniumServer(ActorRef serverActor) throws SocketException {
         this.serverActor = serverActor;
@@ -64,32 +67,18 @@ public class CaliforniumServer extends CoapServer {
         add(new HelloWorldResource());
     }
 
-    /*
-     * Definition of the Hello-World Resource
-     */
     class HelloWorldResource extends CoapResource {
 
         public HelloWorldResource() {
-
             // set resource identifier
             super("helloWorld");
-
-            // set display name
             getAttributes().setTitle("Hello-World Resource");
         }
 
         @Override
-        public void handleGET(CoapExchange exchange) {
-            serverActor.tell("Received message " + exchange.getRequestText(), null);
-
-            // respond to the request
-            exchange.respond("Hello World!");
-        }
-
         public void handlePUT(CoapExchange exchange) {
-            serverActor.tell("Received put message " + exchange.getRequestText(), null);
+            serverActor.tell(new CoapMessageReceived(exchange.getRequestText()), null);
             exchange.respond(ResponseCode.CHANGED);
-            //changed(); // notify all observers
         }
     }
 }
