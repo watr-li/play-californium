@@ -37,15 +37,9 @@ public class CaliforniumServerActor extends UntypedActor {
             server.stop();
             getSelf().tell(akka.actor.PoisonPill.getInstance(), getSelf());
 
-        } else if(message instanceof SendMeCoapMessages) {
-            log.info("Adding actor to coap recipient list: {}", getSender());
-            coapRecipients.add(getSender());
-
         } else if(message instanceof CoapMessageReceived) {
-            // Forward received CoAP messages (from CaliforniumServer) to all registered actors
-            for(ActorRef actor : coapRecipients) {
-                actor.tell(message, getSelf());
-            }
+            CoapMessageReceived msg = (CoapMessageReceived) message;
+            log.info("Received CoAP message: '{}'", msg.getMessage());
 
         } else {
             log.info("Unhandled message: {}", message);
